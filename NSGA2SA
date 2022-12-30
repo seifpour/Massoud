@@ -214,10 +214,6 @@ TPAiu(1:S,1:U)=[30.00	50.00	68.00	135.00
     764.00	691.00	774.00	783.00
     778.00	705.00	792.00	805.00];
 
-%[MP_filename,MP_filepath]=uigetfile({'*.mat';'*.*'},cd');
-%load([MP_filepath MP_filename]);
-
-%% parametrs setting
 npop=25;
 
 pc=0.8;
