@@ -11,6 +11,7 @@ U=4;
 Pu(1,1:U)=[0.25 0.25 0.25 0.25];
 Tt(1,1:U)=[20 20 20 20];
 MinTs=1;
+%% Data Set
 TRmin(1:S,1:U)=[5.194805195	5.194805195	5.194805195	5.194805195
     5.194805195	5.194805195	5.194805195	5.194805195
     8.311688312	8.311688312	8.311688312	8.311688312
@@ -238,3 +239,194 @@ individual.DominatedCount=[];
 
 pop=repmat(individual,npop,1);
 CostFunction=@(x) Cost(x,U,C,K,I,S,TRmin,TRmax,Hmax,Hmin,MinTs,Aiu,TPAiu,Pu);
+%% initial solution
+
+tic;
+np=1;
+while np<=npop
+    BREAKING=0;
+    pop(np).Position1=rand(C,2*S,U);
+    [pop(np)]=CostFunction(pop(np));
+    np=np+1;
+    
+end
+
+T=T0;
+
+T=T0;
+%% main program
+
+for it=1:maxit
+    
+    disp(['Iteration ' num2str(it) ':  Number of 1st Front Individuals = ' num2str(numel(rep))]);
+    
+    if it==maxit
+        break;
+    end
+    
+    %% crossover
+    pop2=repmat(individual,nc+nmu,1);
+    for k=1:nc/2
+        p1=BinaryTournamentSelection(pop);
+        p2=BinaryTournamentSelection(pop);
+        alpha=rand(C,2*S,U);
+        pop2(2*k-1).Position1=(p1.Position1.*alpha+p2.Position1.*(1-alpha));
+        pop2(2*k).Position1=(p2.Position1.*alpha+p1.Position1.*(1-alpha));
+        
+    end
+    
+    
+    
+    %% mutation
+    
+    for k=1:nmu
+        p=BinaryTournamentSelection(pop);
+        pop2(nc+k).Position1=p.Position1;
+        selu=randi(U);
+        for u=1:U
+            if rand<0.5 || u==selu
+                sel=randperm(2*S);
+                sav=pop2(nc+k).Position1(:,sel(1),u);
+                pop2(nc+k).Position1(:,sel(1),u)=pop2(nc+k).Position1(:,sel(2),u);
+                pop2(nc+k).Position1(:,sel(2),u)=sav;
+            end
+        end
+    end
+    
+    %% Feasibility
+    for np=1:nc+nmu
+        BREAKING=0;
+        [pop2(np)]=CostFunction(pop2(np));
+    end
+    %% Neighborhood Search
+    pop3=repmat(individual,nc+nmu,1);
+    for np=1:nc+nmu
+        a=1;
+        while true
+            pop3(np).Position1=pop2(np).Position1;
+            switch a
+                
+                case 1
+                    rc=randi(C);
+                    ri=randi(2*S);
+                    ru=randi(U);
+                    pop3(np).Position1(rc,ri,ru)=random('unif',0,pop3(np).Position1(rc,ri,ru));
+                    
+                case 2
+                    rc=randi(C);
+                    ri=randi(2*S);
+                    ru=randi(U);
+                    pop3(np).Position1(rc,ri,ru)=random('unif',pop3(np).Position1(rc,ri,ru),0.999);
+                    
+                case 3
+                    rc=randi(C);
+                    ri=randperm(2*S);
+                    ru=randi(U);
+                    pop3(np).Position1(rc,min(ri(1:2)):max(ri(1:2)),ru)=fliplr(pop3(np).Position1(rc,min(ri(1:2)):max(ri(1:2)),ru));
+                    
+                case 4
+                    sel=randperm(2*S);
+                    ru=randi(U);
+                    sav=pop3(np).Position1(:,sel(1),ru);
+                    pop3(np).Position1(:,sel(1),ru)=pop3(np).Position1(:,sel(2),ru);
+                    pop3(np).Position1(:,sel(2),ru)=sav;
+                case 5
+                    rc=randi(C);
+                    ru=randi(U);
+                    pop3(np).Position1(rc,:,ru)=[pop3(np).Position1(rc,2:end,ru) pop3(np).Position1(rc,1,ru)] ;
+                    
+            end
+            [pop3(np)]=CostFunction(pop3(np));
+            if Dominates( pop3(np),pop2(np))
+                pop2(np)=pop3(np);
+                a=1;
+            else
+                DeltaC= max(0,pop3(np).Cost(1)-pop2(np).Cost(1))+max(0,pop3(np).Cost(2)-pop2(np).Cost(2));
+                p=exp(-DeltaC/T);
+                 if rand<p
+                     pop2(np)=pop3(np);
+                 end
+                a=a+1;
+            end
+            if a>Nneigh
+                break;
+            end
+        end
+    end
+    %% migration
+    pop=cat(1,pop,pop2);
+    [pop,F1]=NonDominatedSorting(pop);
+    pop=CalcCrowdingDistance(pop,F1);
+    nd_rep=pop(F1{1});
+    rep=[rep
+        nd_rep];
+    
+    [rep,FFF]=NonDominatedSorting(rep);
+    rep=rep(FFF{1});
+    
+    pop=SortPopulation(pop);
+    if size(pop,1)<npop
+        pop=pop(1:size(pop,1));
+    else
+        pop=pop(1:npop);
+    end
+    if Alpha * T >= Tf
+        T = Alpha * T;
+    else
+        T = Tf;
+    end
+    
+    
+end
+tElapsed=toc
+nobj=numel(pop(1).Cost);
+
+pareto_cost=reshape([rep.Cost],nobj,[]);
+plot(pareto_cost(1,:),pareto_cost(2,:),'ro');
+
+[ MID,SPACING,Diversity,N_Pareto ] = Metric( pareto_cost,[0 0],[max(pareto_cost(1,:))*2 max(pareto_cost(2,:))*2]);
+disp('=========================================')
+disp('=========================================')
+disp('number of pareto =')
+disp(N_Pareto);
+format long g
+
+Diversity
+SPACING
+MID
+BestF1=rep(ind);
+Name={'Objective Value'};
+xlswrite('BestF1.xls',Name,'Sheet1','A1')
+xlswrite('BestF1.xls',BestF1.Cost,'Sheet1','B1')
+for u=1:U
+    S1=reshape(BestF1.tA(1,:,:,u),K,I)';
+    Sheet=['tA-Senario' num2str(u)];
+    xlswrite('BestF1.xls',1:K,Sheet,'B1')
+    xlswrite('BestF1.xls',(1:I)',Sheet,'A2')
+    xlswrite('BestF1.xls',S1,Sheet,'B2')
+    
+    S1=reshape(BestF1.tD(1,:,:,u),K,I)';
+    Sheet=['tD-Senario' num2str(u)];
+    xlswrite('BestF1.xls',1:K,Sheet,'B1')
+    xlswrite('BestF1.xls',(1:I)',Sheet,'A2')
+    xlswrite('BestF1.xls',S1,Sheet,'B2')
+end  
+ [~,ind] =min (pareto_cost(2,:));
+BestF2=rep(ind);
+xlswrite('BestF2.xls',Name,'Sheet1','A1')
+xlswrite('BestF2.xls',BestF2.Cost,'Sheet1','B1')
+for u=1:U
+    S1=reshape(BestF2.tA(1,:,:,u),K,I)';
+    Sheet=['tA-Senario' num2str(u)];
+    xlswrite('BestF2_20.xls',1:K,Sheet,'B1')
+    xlswrite('BestF2_20.xls',(1:I)',Sheet,'A2')
+    xlswrite('BestF2_20.xls',S1,Sheet,'B2')
+    
+    S1=reshape(BestF2.tD(1,:,:,u),K,I)';
+    Sheet=['tD-Senario' num2str(u)];
+    xlswrite('BestF2_20.xls',1:K,Sheet,'B1')
+    xlswrite('BestF2_20.xls',(1:I)',Sheet,'A2')
+    xlswrite('BestF2_20.xls',S1,Sheet,'B2')
+    
+end
+
