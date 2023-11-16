@@ -1,0 +1,124 @@
+clc;
+close all;
+clear all;
+ 
+ 
+a=xlsread('FILE_Parato_F1_F2','NSGA_II_N'); %   file name windows 1
+b=xlsread('FILE_Parato_F1_F2','MOEA_D_N'); % used for MoEA-D windows 2
+c=xlsread('FILE_Parato_F1_F2','MOEA_HSS_N'); %   file name windows 3 
+d=xlsread('FILE_Parato_F1_F2','NSGA_II_SA_N');   ok NSGA_II_AS windows 4
+e=xlsread('FILE_Parato_F1_F2','MOGWO_N'); %    NSGA_II_AS windows 5
+ 
+hold on;
+ 
+ 
+%---------NSGA_II_Normalized ------------------
+subplot(2,3,1);
+plot(a(1,:),a(2,:),'o','color','green');
+ 
+xx1=a(1,9);
+yy1=a(2,9);
+hold on;
+plot(xx1,yy1,'O','linewidth',5,'color','blue');
+ID0=[0 xx1];
+ID1=[0 yy1];
+hold on;
+line(ID0,ID1,'linewidth',2);
+legend('NSGA-II','Gold point','Ed'); 
+ 
+xlabel('Z1');
+ylabel('Z2');
+grid on;
+%-----------MoEA_D_Normalized ----------------
+subplot(2,3,2);
+plot(d(1,:),d(2,:),'o','color', [0.4940 0.1840 0.5560]);
+xx1=d(1,9);
+yy1=d(2,9);
+hold on; 
+plot(xx1,yy1,'O','linewidth',5,'color','blue');
+ 
+ID0=[0 xx1];
+ID1=[0 yy1];
+hold on;
+  
+line(ID0,ID1,'linewidth',2);
+legend('MOEA-D ','Gold point','Ed'); 
+ 
+xlabel('Z1');
+ylabel('Z2');
+grid on; 
+%---------MoEA_HSS_Normalized ------------------
+ 
+subplot(2,3,3);
+plot(c(1,:),c(2,:),'o','color','magenta');
+xx1=c(1,31);
+yy1=c(2,31);
+hold on;
+plot(xx1,yy1,'o','linewidth',5,'color','blue');
+ID0=[0 xx1];
+ID1=[0 yy1];
+hold on;
+line(ID0,ID1,'linewidth',2);
+legend('MOEA-HSS','Gold point','Ed'); 
+ 
+xlabel('Z1');
+ylabel('Z2');
+grid on;
+ 
+%---------NSGA_II_SA_Normalized   ------------------
+ 
+subplot(2,3,4);
+plot(g(1,:),g(2,:),'o','color','red');
+xx1=g(1,29);
+
+yy1=g(2,29);
+hold on;
+plot(xx1,yy1,'o','linewidth',5,'color','blue');
+ID0=[0 xx1];
+ID1=[0 yy1];
+hold on;
+line(ID0,ID1,'linewidth',2);
+ 
+legend('NSGA-II-SA ','Gold point','Ed');
+xlabel('Z1');
+ylabel('Z2');
+grid on;
+%---------MOGWO_Normalized   ------------------
+ 
+subplot(2,3,5);
+plot(e(1,:),e(2,:),'o','color','cyan' ); 
+xx1=e(1,9);
+yy1=e(2,9);
+hold on;
+plot(xx1,yy1,'o','linewidth',5,'color','blue');
+ID0=[0 xx1];
+ID1=[0 yy1];
+hold on;
+line(ID0,ID1,'linewidth',2);
+legend('MOGWO','Gold point','Ed');
+ 
+xlabel('Z1');
+ylabel('Z2');
+grid on;
+%---------  Read All   ---------[0.99 0.50 0.50]---------
+ 
+subplot(2,3,6);
+ 
+plot(a(1,:),a(2,:),'.','color','green');
+hold on;
+plot(b(1,:),b(2,:),'.','color',[0.4940 0.1840 0.5560]);
+hold on;
+plot(c(1,:),c(2,:),'.','color','magenta');
+hold on;
+plot(d(1,:),d(2,:),'.','color','red');
+hold on;
+plot(e(1,:),e(2,:),'.','color','cyan');
+hold on;
+ 
+ 
+legend('NSGA-II','MOEA-D','MOEA-HSS','NSGA-II-SA','MOGWO');
+xlabel('Z1');
+ylabel('Z2');
+grid on;
+ 
+ 
